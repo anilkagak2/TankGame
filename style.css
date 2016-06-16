@@ -1,0 +1,20 @@
+/* Styles go here */
+
+.player{
+  box-shadow:
+    0 0 0 10px #cc9900,
+    3px 0 0 10px #fff,
+    6px 0 0 10px #fff,
+    -6px 0 0 10px #fff,
+    -20px 10px 0 0px #cc9900,
+    20px 10px 0 0px #cc9900,
+    -20px -10px 0 0 #cc9900,
+    20px -10px 0 0 #cc9900;
+  background: #cc9900;
+  overflow: hidden;
+  margin: 0px;
+  padding: 0px;
+  position : absolute;
+  width: 10px;
+  height: 10px;
+}
