@@ -270,11 +270,33 @@ var TankGame = React.createClass({
     [ true, true, '43%', '25%', '30px', '20px', 10 ],
   ],
   
+  // enemy characteristics (positions, directions)
+  enemyCharacteristics: [
+	  {
+	  },
+	  {
+	  }
+  ],
+  
   // player speed and direction
   playerCharacteristics: {
     left : 200,
     bottom : 0,
 	direction: Direction.top
+  },
+
+  getInitialState: function(){
+    return {
+        time: Date.now()
+    };
+  },
+  
+  tick : function(  ){
+    var t = Date.now();
+    requestAnimationFrame(this.tick);
+    this.setState({
+		time : t
+    });
   },
 
   updatePlayerCharacteristic: function(player, left, bottom, degree, newDirection) {
@@ -384,6 +406,10 @@ var TankGame = React.createClass({
   keyUpHandler : function(event) {
   },
 
+  componentWillMount: function(){
+	requestAnimationFrame( this.tick );
+  },
+  
   componentDidMount : function() {
     window.addEventListener('keydown', this.keyDownHandler, true);
     window.addEventListener('keyup', this.keyUpHandler, true);
@@ -395,6 +421,7 @@ var TankGame = React.createClass({
   },
   
   render: function() {
+	console.log("rendering");
     var objects = [];
 
 	objects.push(React.createElement(Tank, {key: 'Tank', ref : 'player1', left: this.playerCharacteristics.left, bottom: this.playerCharacteristics.bottom, direction: this.playerCharacteristics.direction}));

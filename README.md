@@ -11,8 +11,13 @@ Following are the sub-parts being developed
 - DONE Bunker
 - DONE Key Movements for the player
 - DONE Stop movement on obstruction and boundaries
-- Enemy tanks
+- DONE Enemy tanks
+- DONE Game Loop
+- Enemy Movements and randomization
 - Bullets
+- Object destructions
+- Game winning/losing conditions
 - Score board
 - Customization
 - Player mode
+- Corner Bug Fixes
