@@ -185,8 +185,8 @@ var Tank = React.createClass({
 	switch(this.props.direction) {
 		case Direction.left: return 'rotate(180deg)';
 		case Direction.right: return 'rotate(0deg)';
-		case Direction.top: return 'rotate(90deg)';
-		case Direction.bottom: return 'rotate(270deg)';
+		case Direction.top: return 'rotate(270deg)';
+		case Direction.bottom: return 'rotate(90deg)';
 	}
   },
   
@@ -229,7 +229,7 @@ var PLAYER_MAX_POSITIONS = {
 		PLAYER_LEFT_MAX : 506,
 		PLAYER_LEFT_MIN : 0,
 		PLAYER_BOTTOM_MAX : 496,
-		PLAYER_BOTTOM_MIN : 10,
+		PLAYER_BOTTOM_MIN : 0,
 	}
 };
 
@@ -301,8 +301,8 @@ var TankGame = React.createClass({
   
   getAngleFromDirection: function(direction) {
 	switch(direction) {
-		case Direction.top: return 90;
-		case Direction.bottom: return 270;
+		case Direction.top: return 270;
+		case Direction.bottom: return 90;
 		case Direction.left: return 180;
 		case Direction.right: return 0;
 	}
@@ -314,28 +314,27 @@ var TankGame = React.createClass({
 	var oldDirection = this.playerCharacteristics.direction;
 	var oldAngle = this.getAngleFromDirection(oldDirection);
 	var newAngle = 0;
-	var newDirection = Direction.top;
 
     switch(event.keyCode) {
       case keyCodes.leftArrow:
         this.playerCharacteristics.left -= this.SPEED_INCREMENT;
 		newAngle = 180;
-		newDirection = Direction.left;
+		this.playerCharacteristics.direction = Direction.left;
         break;
       case keyCodes.upArrow:
         this.playerCharacteristics.bottom += this.SPEED_INCREMENT;
-		newAngle = 90;
-		newDirection = Direction.top;
+		newAngle = 270;
+		this.playerCharacteristics.direction = Direction.top;
         break;
       case keyCodes.rightArrow:
         this.playerCharacteristics.left += this.SPEED_INCREMENT;
 		newAngle = 0;
-		newDirection = Direction.right;
+		this.playerCharacteristics.direction = Direction.right;
         break;
       case keyCodes.downArrow:
         this.playerCharacteristics.bottom -= this.SPEED_INCREMENT;
-		newAngle = 270;
-		newDirection = Direction.bottom;
+		newAngle = 90;
+		this.playerCharacteristics.direction = Direction.bottom;
         break;
       default:
         return;
@@ -356,7 +355,7 @@ var TankGame = React.createClass({
 
     // set the value currently, so that we can revert in case it does not fit
 	var player = ReactDOM.findDOMNode(this.refs.player1);
-	if (oldDirection != newDirection) {
+	if (oldDirection != this.playerCharacteristics.direction) {
 		player.style.transform = "rotate(" + newAngle + "deg)";
 	} else {
 		player.style.left = this.playerCharacteristics.left.toString() + "px";
@@ -402,8 +401,8 @@ var TankGame = React.createClass({
 
 	objects.push(React.createElement(Tank, {key: 'Tank', ref : 'player1', left: this.playerCharacteristics.left, bottom: this.playerCharacteristics.bottom, direction: this.playerCharacteristics.direction}));
 
-	objects.push(React.createElement(Tank, {key: 'enemy2', ref : 'enemy2', left: '0', bottom: '506', direction: Direction.left, bgFirst: 'silver', bgMiddle: 'ghostwhite', bgLast: 'silver', bgGun: 'cadetblue'}));
-	objects.push(React.createElement(Tank, {key: 'enemy1', ref : 'enemy1', left: '506', bottom: '506',  direction: Direction.right, bgFirst: 'silver', bgMiddle: 'ghostwhite', bgLast: 'silver', bgGun: 'cadetblue'}));
+	objects.push(React.createElement(Tank, {key: 'enemy2', ref : 'enemy2', left: '0', bottom: '506', direction: Direction.right, bgFirst: 'silver', bgMiddle: 'ghostwhite', bgLast: 'silver', bgGun: 'cadetblue'}));
+	objects.push(React.createElement(Tank, {key: 'enemy1', ref : 'enemy1', left: '506', bottom: '506',  direction: Direction.left, bgFirst: 'silver', bgMiddle: 'ghostwhite', bgLast: 'silver', bgGun: 'cadetblue'}));
 
     objects.push(React.createElement(Bunker, {key: 'bunker', ref : 'bunker'}));
 
