@@ -11,6 +11,13 @@ var keyCodes = {
   downArrow : 40
 };
 
+var Direction = {
+	left : 1,
+	right : 2,
+	top : 3,
+	bottom : 4
+};
+
 var CollisionBetweenRectangles = function(r1, r2, vicinity) {
   return  !(r2.left >= r1.right + vicinity
       || r2.right <= r1.left - vicinity
@@ -129,7 +136,7 @@ var Bunker = React.createClass({
       width: '70px',
       height: '70px',
       position: 'absolute',
-      bottom: '1%',
+      bottom: '-4px',
       left: '44%'
     };
 
@@ -142,14 +149,14 @@ var Bunker = React.createClass({
         height: '32px',
         position: 'absolute',
         top: '35%',
-        right: '30%'
+        right: '27%'
       }
     };
 
     bunker.push(React.createElement(Wall, { key: 'wall2', ref: 'wall2', vertical: false, width: '10px', height: '10px' }));
     bunker.push(React.createElement(Wall, { key: 'wall1', ref: 'wall1', vertical: true, width: '10px', height: '10px', bricks:3  }));
     bunker.push(React.createElement('img', baseObjectProps, null));
-    bunker.push(React.createElement(Wall, { key: 'wall3', ref: 'wall3', vertical: true, width: '10px', height: '10px', bricks:3, positionFixed: true, top: '25%', right: '0%' }));
+    bunker.push(React.createElement(Wall, { key: 'wall3', ref: 'wall3', vertical: true, width: '10px', height: '10px', bricks:3, positionFixed: true, top: '23%', right: '0%' }));
     return (
       React.createElement('div', {
         style: bunkerStyle
@@ -158,21 +165,91 @@ var Bunker = React.createClass({
   }
 });
 
+// Tank object can be used as a player and as enemies
+var Tank = React.createClass({
+  displayName: 'Tank',
+  
+  getDefaultProps: function() {
+    return {
+      bottom: '0',
+	  left: '0',
+	  direction: Direction.left,
+	  bgFirst: 'silver',
+	  bgMiddle: '#cc9900',
+	  bgLast: 'silver',
+	  bgGun: 'dimgray'
+    };
+  },
+  
+  getTransformAngle: function() {
+	switch(this.props.direction) {
+		case Direction.left: return 'rotate(180deg)';
+		case Direction.right: return 'rotate(0deg)';
+		case Direction.top: return 'rotate(90deg)';
+		case Direction.bottom: return 'rotate(270deg)';
+	}
+  },
+  
+  render: function() {
+	var transformAngle = this.getTransformAngle();
+	
+	var children = [];
+	children.push(React.createElement('div', {key:'first', className: "firstStripe", style: {background: this.props.bgFirst} },""));
+	children.push(React.createElement('div', {key:'middle', className: "middleStripe", style: {background: this.props.bgMiddle} },""));
+	children.push(React.createElement('div', {key:'last', className: "lastStripe", style: {background: this.props.bgLast} },""));
+	children.push(React.createElement('div', {key:'gun', className: "gun", style: {background: this.props.bgGun}}, ""));
+	
+    return (
+		React.createElement(
+			'div', 
+			{
+				className: "new-player",
+				style: {
+					bottom : this.props.bottom + "px",
+					left : this.props.left + "px",
+					transform: transformAngle,
+					display: 'inline'
+				}
+			},
+			children
+		)
+    );
+  }
+});
+
+var PLAYER_MAX_POSITIONS = {
+	DIRECTION_LEFT : {
+		PLAYER_LEFT_MAX : 486,
+		PLAYER_LEFT_MIN : 0,
+		PLAYER_BOTTOM_MAX : 506,
+		PLAYER_BOTTOM_MIN : 0,
+	},
+	
+	DIRECTION_TOP : {
+		PLAYER_LEFT_MAX : 506,
+		PLAYER_LEFT_MIN : 0,
+		PLAYER_BOTTOM_MAX : 496,
+		PLAYER_BOTTOM_MIN : 10,
+	}
+};
+
 // Tank Game main control routine
 var TankGame = React.createClass({
   displayName: 'TankGame',
 
-  SPEED_INCREMENT: 1,
-  WINDOW_WIDTH : 460,
+  SPEED_INCREMENT: 5,
+  WINDOW_WIDTH : 540,
   WINDOW_HEIGHT : 540,
   BUNKER_VICINITY : 0,
   WALL_VICINITY : 0,
+  PLAYER_LEFT_MAX : 486,
+  PLAYER_BOTTOM_MAX : 506,
   
   walls: 
   [
     // left
-    [ true, true, '5%', '80%', '30px', '20px', 5 ],
-    [ true, true, '5%', '65%', '30px', '20px', 5 ],
+    [ true, true, '7%', '80%', '30px', '20px', 5 ],
+    [ true, true, '7%', '65%', '30px', '20px', 5 ],
     [ true, true, '43%', '80%', '30px', '20px', 10 ],
     [ true, true, '43%', '65%', '30px', '20px', 10 ],
     
@@ -189,60 +266,111 @@ var TankGame = React.createClass({
     [ true, true, '50%', '50%', '30px', '20px', 5 ],
     
     // right
-    [ true, true, '5%', '10%', '30px', '20px', 5 ],
-    [ true, true, '5%', '25%', '30px', '20px', 5 ],
+    [ true, true, '7%', '10%', '30px', '20px', 5 ],
+    [ true, true, '7%', '25%', '30px', '20px', 5 ],
     [ true, true, '43%', '10%', '30px', '20px', 10 ],
     [ true, true, '43%', '25%', '30px', '20px', 10 ],
   ],
   
   // player speed and direction
-  playerVelocity: {
-    left : 10,
-    bottom : 4
+  playerCharacteristics: {
+    left : 200,
+    bottom : 0,
+	direction: Direction.top
   },
 
+  updatePlayerCharacteristic: function(player, left, bottom, degree, newDirection) {
+	this.playerCharacteristics.left = left;
+    this.playerCharacteristics.bottom = bottom;
+	this.playerCharacteristics.direction = newDirection;
+    player.style.left = left + "px";
+    player.style.bottom = bottom + "px";
+	player.style.transform = "rotate(" + degree + "deg)";
+  },
+  
+  getPlayerMaxPositionsForDirection: function() {
+	switch(this.playerCharacteristics.direction) {
+		case Direction.top:
+		case Direction.bottom:
+			return PLAYER_MAX_POSITIONS.DIRECTION_TOP;
+		case Direction.left:
+		case Direction.right:
+			return PLAYER_MAX_POSITIONS.DIRECTION_LEFT;
+	}
+  },
+  
+  getAngleFromDirection: function(direction) {
+	switch(direction) {
+		case Direction.top: return 90;
+		case Direction.bottom: return 270;
+		case Direction.left: return 180;
+		case Direction.right: return 0;
+	}
+  },
+  
   keyDownHandler : function(event) {
-    var oldLeft = this.playerVelocity.left;
-    var oldBottom = this.playerVelocity.bottom;
+    var oldLeft = this.playerCharacteristics.left;
+    var oldBottom = this.playerCharacteristics.bottom;
+	var oldDirection = this.playerCharacteristics.direction;
+	var oldAngle = this.getAngleFromDirection(oldDirection);
+	var newAngle = 0;
+	var newDirection = Direction.top;
 
     switch(event.keyCode) {
       case keyCodes.leftArrow:
-        this.playerVelocity.left -= this.SPEED_INCREMENT;
+        this.playerCharacteristics.left -= this.SPEED_INCREMENT;
+		newAngle = 180;
+		newDirection = Direction.left;
         break;
       case keyCodes.upArrow:
-        this.playerVelocity.bottom += this.SPEED_INCREMENT;
+        this.playerCharacteristics.bottom += this.SPEED_INCREMENT;
+		newAngle = 90;
+		newDirection = Direction.top;
         break;
       case keyCodes.rightArrow:
-        this.playerVelocity.left += this.SPEED_INCREMENT;
+        this.playerCharacteristics.left += this.SPEED_INCREMENT;
+		newAngle = 0;
+		newDirection = Direction.right;
         break;
       case keyCodes.downArrow:
-        this.playerVelocity.bottom -= this.SPEED_INCREMENT;
+        this.playerCharacteristics.bottom -= this.SPEED_INCREMENT;
+		newAngle = 270;
+		newDirection = Direction.bottom;
         break;
       default:
         return;
     }
-    
-    if (this.playerVelocity.left<0) this.playerVelocity.left = 0;
-    if (this.playerVelocity.bottom<0) this.playerVelocity.bottom = 0;
-    if (this.playerVelocity.left>100) this.playerVelocity.left = 100;
-    if (this.playerVelocity.bottom>100) this.playerVelocity.bottom = 100;
+
+	var playerMaxPositions = this.getPlayerMaxPositionsForDirection();
+    if (this.playerCharacteristics.left<playerMaxPositions.PLAYER_LEFT_MIN)
+		this.playerCharacteristics.left = playerMaxPositions.PLAYER_LEFT_MIN;
+
+    if (this.playerCharacteristics.bottom<playerMaxPositions.PLAYER_BOTTOM_MIN)
+		this.playerCharacteristics.bottom = playerMaxPositions.PLAYER_BOTTOM_MIN;
+
+    if (this.playerCharacteristics.left>playerMaxPositions.PLAYER_LEFT_MAX)
+		this.playerCharacteristics.left = playerMaxPositions.PLAYER_LEFT_MAX;
+
+    if (this.playerCharacteristics.bottom>playerMaxPositions.PLAYER_BOTTOM_MAX)
+		this.playerCharacteristics.bottom = playerMaxPositions.PLAYER_BOTTOM_MAX;
 
     // set the value currently, so that we can revert in case it does not fit
-    var player = ReactDOM.findDOMNode(this.refs.player1);
-    player.style.left = this.playerVelocity.left.toString() + "%";
-    player.style.bottom = this.playerVelocity.bottom.toString() + "%";
+	var player = ReactDOM.findDOMNode(this.refs.player1);
+	if (oldDirection != newDirection) {
+		player.style.transform = "rotate(" + newAngle + "deg)";
+	} else {
+		player.style.left = this.playerCharacteristics.left.toString() + "px";
+		player.style.bottom = this.playerCharacteristics.bottom.toString() + "px";
+	}
+
     var playerRect = player.getBoundingClientRect();
 
     // check if collides with bunker
     if (this.refs.bunker.checkCollision(playerRect, this.BUNKER_VICINITY)) {
-      this.playerVelocity.left = oldLeft;
-      this.playerVelocity.bottom = oldBottom;
-      
-      player.style.left = oldLeft + "%";
-      player.style.bottom = oldBottom + "%";
-      return;
+		this.updatePlayerCharacteristic(player, oldLeft, oldBottom, oldAngle, oldDirection);
+		return;
     }
-    
+
     // check if collides with the walls
     for (var i=0; i<this.walls.length; ++i) {
       var wallString = "wall" + i;
@@ -250,11 +378,7 @@ var TankGame = React.createClass({
       var collisionOccurred = wallReference.checkCollision(playerRect, this.WALL_VICINITY);
 
       if (collisionOccurred) {
-        this.playerVelocity.left = oldLeft;
-        this.playerVelocity.bottom = oldBottom;
-      
-        player.style.left = oldLeft + "%";
-        player.style.bottom = oldBottom + "%";
+		this.updatePlayerCharacteristic(player, oldLeft, oldBottom, oldAngle, oldDirection);
         return;
       }
     }
@@ -275,26 +399,13 @@ var TankGame = React.createClass({
   
   render: function() {
     var objects = [];
-    objects.push(
-      React.createElement(
-        'div', 
-        {
-          key: "player1",
-          ref:'player1',
-          className : "player",
-          style: {bottom : this.playerVelocity.bottom + '%', left : this.playerVelocity.bottom + '%'}
-        },
-        "")
-    );
+
+	objects.push(React.createElement(Tank, {key: 'Tank', ref : 'player1', left: this.playerCharacteristics.left, bottom: this.playerCharacteristics.bottom, direction: this.playerCharacteristics.direction}));
+
+	objects.push(React.createElement(Tank, {key: 'enemy2', ref : 'enemy2', left: '0', bottom: '506', direction: Direction.left, bgFirst: 'silver', bgMiddle: 'ghostwhite', bgLast: 'silver', bgGun: 'cadetblue'}));
+	objects.push(React.createElement(Tank, {key: 'enemy1', ref : 'enemy1', left: '506', bottom: '506',  direction: Direction.right, bgFirst: 'silver', bgMiddle: 'ghostwhite', bgLast: 'silver', bgGun: 'cadetblue'}));
+
     objects.push(React.createElement(Bunker, {key: 'bunker', ref : 'bunker'}));
-    objects.push(React.createElement('hr', {
-      key: 'obj2',
-      style: {
-        position: 'absolute',
-        bottom: '0%',
-        width: '100%'
-      }
-    }));
 
     this.walls.forEach(
       (val, index) => {
