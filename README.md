@@ -13,13 +13,14 @@ Following are the sub-parts being developed
 - DONE Stop movement on obstruction and boundaries
 - DONE Enemy tanks
 - DONE Game Loop
-- Enemy Movements and randomization
+- DONE Enemy Movements and randomization
 - Bullets
 - Object destructions
+- Game Start/Stop
 - Game winning/losing conditions
 - Score board
 - Customization
 - Player mode
 - Corner Bug Fixes
 	- Tanks can cross each other
-	- Sometime tanks get stuck at wall corners
+	- DONE Sometime tanks get stuck at wall corners

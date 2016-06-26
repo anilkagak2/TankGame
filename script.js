@@ -318,7 +318,7 @@ var TankGame = React.createClass({
   },
   
   getNewTimeValue: function() {
-	return Math.floor((Date.now() / 1000));
+	return Math.floor((Date.now() / 5000));
   },
   
   tick : function() {
@@ -335,6 +335,9 @@ var TankGame = React.createClass({
 			enemy.lastDirectionChangeTime = 0;
 			enemy.direction = RandomDirection();
 		} else {
+			var oldLeft = enemy.left, oldBottom = enemy.bottom;
+			var oldDirection = enemy.direction, oldAngle = this.getAngleFromDirection(enemy.direction);
+		
 			enemy.left -= (enemy.direction == Direction.left)?this.SPEED_INCREMENT:0;
 			enemy.left += (enemy.direction == Direction.right)?this.SPEED_INCREMENT:0;
 			enemy.bottom += (enemy.direction == Direction.top)?this.SPEED_INCREMENT:0;
@@ -345,6 +348,14 @@ var TankGame = React.createClass({
 			if (enemy.bottom<playerMaxPositions.PLAYER_BOTTOM_MIN) enemy.bottom = playerMaxPositions.PLAYER_BOTTOM_MIN;
 			if (enemy.left>playerMaxPositions.PLAYER_LEFT_MAX) enemy.left = playerMaxPositions.PLAYER_LEFT_MAX;
 			if (enemy.bottom>playerMaxPositions.PLAYER_BOTTOM_MAX) enemy.bottom = playerMaxPositions.PLAYER_BOTTOM_MAX;
+
+			var enemyTank = ReactDOM.findDOMNode(this.refs['enemy' + index]);
+			enemyTank.style.left = enemy.left.toString() + "px";
+			enemyTank.style.bottom = enemy.bottom.toString() + "px";
+			var playerRect = enemyTank.getBoundingClientRect();
+			if (this.checkObjectCollision(playerRect)) {
+				this.updatePlayerCharacteristic(enemy, enemyTank, oldLeft, oldBottom, oldAngle, oldDirection);
+			}
 		}
       });
 
@@ -354,13 +365,13 @@ var TankGame = React.createClass({
     requestAnimationFrame(this.tick);
     this.setState({
 		time : t
-    });
+    }); 
   },
 
-  updatePlayerCharacteristic: function(player, left, bottom, degree, newDirection) {
-	this.playerCharacteristics.left = left;
-    this.playerCharacteristics.bottom = bottom;
-	this.playerCharacteristics.direction = newDirection;
+  updatePlayerCharacteristic: function(playerCharacteristics, player, left, bottom, degree, direction) {
+	playerCharacteristics.left = left;
+    playerCharacteristics.bottom = bottom;
+	playerCharacteristics.direction = direction;
     player.style.left = left + "px";
     player.style.bottom = bottom + "px";
 	player.style.transform = "rotate(" + degree + "deg)";
@@ -418,49 +429,54 @@ var TankGame = React.createClass({
         return;
     }
 
-	var playerMaxPositions = this.getPlayerMaxPositionsForDirection(this.playerCharacteristics.direction);
-    if (this.playerCharacteristics.left<playerMaxPositions.PLAYER_LEFT_MIN)
-		this.playerCharacteristics.left = playerMaxPositions.PLAYER_LEFT_MIN;
-
-    if (this.playerCharacteristics.bottom<playerMaxPositions.PLAYER_BOTTOM_MIN)
-		this.playerCharacteristics.bottom = playerMaxPositions.PLAYER_BOTTOM_MIN;
-
-    if (this.playerCharacteristics.left>playerMaxPositions.PLAYER_LEFT_MAX)
-		this.playerCharacteristics.left = playerMaxPositions.PLAYER_LEFT_MAX;
-
-    if (this.playerCharacteristics.bottom>playerMaxPositions.PLAYER_BOTTOM_MAX)
-		this.playerCharacteristics.bottom = playerMaxPositions.PLAYER_BOTTOM_MAX;
-
     // set the value currently, so that we can revert in case it does not fit
 	var player = ReactDOM.findDOMNode(this.refs.player1);
 	if (oldDirection != this.playerCharacteristics.direction) {
 		player.style.transform = "rotate(" + newAngle + "deg)";
 	} else {
+		var playerMaxPositions = this.getPlayerMaxPositionsForDirection(this.playerCharacteristics.direction);
+		if (this.playerCharacteristics.left<playerMaxPositions.PLAYER_LEFT_MIN)
+			this.playerCharacteristics.left = playerMaxPositions.PLAYER_LEFT_MIN;
+
+		if (this.playerCharacteristics.bottom<playerMaxPositions.PLAYER_BOTTOM_MIN)
+			this.playerCharacteristics.bottom = playerMaxPositions.PLAYER_BOTTOM_MIN;
+
+		if (this.playerCharacteristics.left>playerMaxPositions.PLAYER_LEFT_MAX)
+			this.playerCharacteristics.left = playerMaxPositions.PLAYER_LEFT_MAX;
+
+		if (this.playerCharacteristics.bottom>playerMaxPositions.PLAYER_BOTTOM_MAX)
+			this.playerCharacteristics.bottom = playerMaxPositions.PLAYER_BOTTOM_MAX;
+
 		player.style.left = this.playerCharacteristics.left.toString() + "px";
 		player.style.bottom = this.playerCharacteristics.bottom.toString() + "px";
+		
+		var playerRect = player.getBoundingClientRect();
+		if (this.checkObjectCollision(playerRect)) {
+			this.updatePlayerCharacteristic(this.playerCharacteristics, player, oldLeft, oldBottom, oldAngle, oldDirection);
+		}
 	}
+  },
 
-    var playerRect = player.getBoundingClientRect();
-
-    // check if collides with bunker
-    if (this.refs.bunker.checkCollision(playerRect, this.BUNKER_VICINITY)) {
-		this.updatePlayerCharacteristic(player, oldLeft, oldBottom, oldAngle, oldDirection);
-		return;
+  checkObjectCollision: function(objectRect) {
+    // check if it collides with bunker
+    if (this.refs.bunker.checkCollision(objectRect, this.BUNKER_VICINITY)) {
+		return true;
     }
 
-    // check if collides with the walls
+    // check if it collides with the walls
     for (var i=0; i<this.walls.length; ++i) {
       var wallString = "wall" + i;
       var wallReference = this.refs[wallString];
-      var collisionOccurred = wallReference.checkCollision(playerRect, this.WALL_VICINITY);
+      var collisionOccurred = wallReference.checkCollision(objectRect, this.WALL_VICINITY);
 
       if (collisionOccurred) {
-		this.updatePlayerCharacteristic(player, oldLeft, oldBottom, oldAngle, oldDirection);
-        return;
+        return true;
       }
     }
-  },
 
+	return false;
+  },
+  
   keyUpHandler : function(event) {
   },
 
