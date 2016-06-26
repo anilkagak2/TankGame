@@ -283,7 +283,6 @@ var TankGame = React.createClass({
   // enemy characteristics (positions, directions)
   enemyCharacteristics: [
 	{
-		ref : 'enemy1',
 		left: 506,
 		bottom: 506,
 		direction: Direction.left,
@@ -294,7 +293,6 @@ var TankGame = React.createClass({
 		lastDirectionChangeTime: 0
 	},
 	{
-		ref : 'enemy2',
 		left: 0,
 		bottom: 506,
 		direction: Direction.right,
@@ -320,7 +318,7 @@ var TankGame = React.createClass({
   },
   
   getNewTimeValue: function() {
-	return Math.floor((Date.now() / 500));
+	return Math.floor((Date.now() / 1000));
   },
   
   tick : function() {
@@ -480,16 +478,27 @@ var TankGame = React.createClass({
     window.removeEventListener('keyup', keyUpHandler);
   },
   
-  render: function() {
-	var enm0 = this.enemyCharacteristics[0];
-	var enm1 = this.enemyCharacteristics[1];
-  
+  render: function() {  
     var objects = [];
 	objects.push(React.createElement(Tank, {key: 'Tank', ref : 'player1', left: this.playerCharacteristics.left, bottom: this.playerCharacteristics.bottom, direction: this.playerCharacteristics.direction}));
-	objects.push(React.createElement(Tank, {key: 'enemy1', ref : 'enemy1', left: enm0.left, bottom: enm0.bottom,  direction: enm0.direction, bgFirst: enm0.bgFirst, bgMiddle: enm0.bgMiddle, bgLast: enm0.bgLast, bgGun: enm0.bgGun}));
-	objects.push(React.createElement(Tank, {key: 'enemy2', ref : 'enemy2', left: enm1.left, bottom: enm1.bottom,  direction: enm1.direction, bgFirst: enm1.bgFirst, bgMiddle: enm1.bgMiddle, bgLast: enm1.bgLast, bgGun: enm1.bgGun}));
     objects.push(React.createElement(Bunker, {key: 'bunker', ref : 'bunker'}));
 
+	this.enemyCharacteristics.forEach(
+      (enemy, index) => {
+			objects.push(React.createElement(Tank, {
+				key: 'enemy' + index,
+				ref : 'enemy' + index,
+				left: enemy.left,
+				bottom: enemy.bottom,
+				direction: enemy.direction,
+				bgFirst: enemy.bgFirst,
+				bgMiddle: enemy.bgMiddle,
+				bgLast: enemy.bgLast,
+				bgGun: enemy.bgGun
+			}));
+		}
+	);
+	
     this.walls.forEach(
       (val, index) => {
         objects.push(React.createElement(Wall, {
