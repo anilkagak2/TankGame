@@ -21,3 +21,5 @@ Following are the sub-parts being developed
 - Customization
 - Player mode
 - Corner Bug Fixes
+	- Tanks can cross each other
+	- Sometime tanks get stuck at wall corners

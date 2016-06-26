@@ -25,6 +25,14 @@ var CollisionBetweenRectangles = function(r1, r2, vicinity) {
       || r2.bottom <= r1.top - vicinity);
 };
 
+var RandomNumberBetweenXAndY = function(X, Y) {
+	return Math.floor((Math.random() * Y) + X);
+}
+
+var RandomDirection = function() {
+	return RandomNumberBetweenXAndY(1,4);
+}
+
 // Base Unit of wall
 var Brick = React.createClass({
   displayName: 'Brick',
@@ -233,6 +241,8 @@ var PLAYER_MAX_POSITIONS = {
 	}
 };
 
+var DIRECTION_CHANGE_TIME = 10;
+
 // Tank Game main control routine
 var TankGame = React.createClass({
   displayName: 'TankGame',
@@ -272,10 +282,28 @@ var TankGame = React.createClass({
   
   // enemy characteristics (positions, directions)
   enemyCharacteristics: [
-	  {
-	  },
-	  {
-	  }
+	{
+		ref : 'enemy1',
+		left: 506,
+		bottom: 506,
+		direction: Direction.left,
+		bgFirst: 'silver',
+		bgMiddle: 'ghostwhite',
+		bgLast: 'silver',
+		bgGun: 'cadetblue',
+		lastDirectionChangeTime: 0
+	},
+	{
+		ref : 'enemy2',
+		left: 0,
+		bottom: 506,
+		direction: Direction.right,
+		bgFirst: 'silver',
+		bgMiddle: 'ghostwhite',
+		bgLast: 'silver',
+		bgGun: 'cadetblue',
+		lastDirectionChangeTime: 0
+	}
   ],
   
   // player speed and direction
@@ -287,12 +315,44 @@ var TankGame = React.createClass({
 
   getInitialState: function(){
     return {
-        time: Date.now()
+        time: this.getNewTimeValue()
     };
   },
   
-  tick : function(  ){
-    var t = Date.now();
+  getNewTimeValue: function() {
+	return Math.floor((Date.now() / 500));
+  },
+  
+  tick : function() {
+    var t = this.getNewTimeValue();
+
+	// 1
+	// do this for all the enemies
+	// change direction if not changed for given time
+	// increase the position as per direction
+	this.enemyCharacteristics.forEach(
+      (enemy, index) => {
+		enemy.lastDirectionChangeTime += 1;
+		if (enemy.lastDirectionChangeTime > DIRECTION_CHANGE_TIME) {
+			enemy.lastDirectionChangeTime = 0;
+			enemy.direction = RandomDirection();
+		} else {
+			enemy.left -= (enemy.direction == Direction.left)?this.SPEED_INCREMENT:0;
+			enemy.left += (enemy.direction == Direction.right)?this.SPEED_INCREMENT:0;
+			enemy.bottom += (enemy.direction == Direction.top)?this.SPEED_INCREMENT:0;
+			enemy.bottom -= (enemy.direction == Direction.bottom)?this.SPEED_INCREMENT:0;
+			
+			var playerMaxPositions = this.getPlayerMaxPositionsForDirection(enemy.direction);
+			if (enemy.left<playerMaxPositions.PLAYER_LEFT_MIN) enemy.left = playerMaxPositions.PLAYER_LEFT_MIN;
+			if (enemy.bottom<playerMaxPositions.PLAYER_BOTTOM_MIN) enemy.bottom = playerMaxPositions.PLAYER_BOTTOM_MIN;
+			if (enemy.left>playerMaxPositions.PLAYER_LEFT_MAX) enemy.left = playerMaxPositions.PLAYER_LEFT_MAX;
+			if (enemy.bottom>playerMaxPositions.PLAYER_BOTTOM_MAX) enemy.bottom = playerMaxPositions.PLAYER_BOTTOM_MAX;
+		}
+      });
+
+	// 2
+	// traverse the bullet journey
+
     requestAnimationFrame(this.tick);
     this.setState({
 		time : t
@@ -308,8 +368,8 @@ var TankGame = React.createClass({
 	player.style.transform = "rotate(" + degree + "deg)";
   },
   
-  getPlayerMaxPositionsForDirection: function() {
-	switch(this.playerCharacteristics.direction) {
+  getPlayerMaxPositionsForDirection: function(direction) {
+	switch(direction) {
 		case Direction.top:
 		case Direction.bottom:
 			return PLAYER_MAX_POSITIONS.DIRECTION_TOP;
@@ -360,7 +420,7 @@ var TankGame = React.createClass({
         return;
     }
 
-	var playerMaxPositions = this.getPlayerMaxPositionsForDirection();
+	var playerMaxPositions = this.getPlayerMaxPositionsForDirection(this.playerCharacteristics.direction);
     if (this.playerCharacteristics.left<playerMaxPositions.PLAYER_LEFT_MIN)
 		this.playerCharacteristics.left = playerMaxPositions.PLAYER_LEFT_MIN;
 
@@ -421,14 +481,13 @@ var TankGame = React.createClass({
   },
   
   render: function() {
-	console.log("rendering");
+	var enm0 = this.enemyCharacteristics[0];
+	var enm1 = this.enemyCharacteristics[1];
+  
     var objects = [];
-
 	objects.push(React.createElement(Tank, {key: 'Tank', ref : 'player1', left: this.playerCharacteristics.left, bottom: this.playerCharacteristics.bottom, direction: this.playerCharacteristics.direction}));
-
-	objects.push(React.createElement(Tank, {key: 'enemy2', ref : 'enemy2', left: '0', bottom: '506', direction: Direction.right, bgFirst: 'silver', bgMiddle: 'ghostwhite', bgLast: 'silver', bgGun: 'cadetblue'}));
-	objects.push(React.createElement(Tank, {key: 'enemy1', ref : 'enemy1', left: '506', bottom: '506',  direction: Direction.left, bgFirst: 'silver', bgMiddle: 'ghostwhite', bgLast: 'silver', bgGun: 'cadetblue'}));
-
+	objects.push(React.createElement(Tank, {key: 'enemy1', ref : 'enemy1', left: enm0.left, bottom: enm0.bottom,  direction: enm0.direction, bgFirst: enm0.bgFirst, bgMiddle: enm0.bgMiddle, bgLast: enm0.bgLast, bgGun: enm0.bgGun}));
+	objects.push(React.createElement(Tank, {key: 'enemy2', ref : 'enemy2', left: enm1.left, bottom: enm1.bottom,  direction: enm1.direction, bgFirst: enm1.bgFirst, bgMiddle: enm1.bgMiddle, bgLast: enm1.bgLast, bgGun: enm1.bgGun}));
     objects.push(React.createElement(Bunker, {key: 'bunker', ref : 'bunker'}));
 
     this.walls.forEach(
