@@ -5,10 +5,11 @@ var BricColor = {
 };
 
 var keyCodes = {
-  leftArrow :	37,
-  upArrow : 38,
-  rightArrow : 39,
-  downArrow : 40
+  leftArrow: 37,
+  upArrow: 38,
+  rightArrow: 39,
+  downArrow: 40,
+  fire: 70
 };
 
 var Direction = {
@@ -241,13 +242,44 @@ var PLAYER_MAX_POSITIONS = {
 	}
 };
 
-var DIRECTION_CHANGE_TIME = 10;
+var BULLET_MAX_POSITIONS = {
+	DIRECTION : {
+		PLAYER_LEFT_MAX : 526,
+		PLAYER_LEFT_MIN : 0,
+		PLAYER_BOTTOM_MAX : 526,
+		PLAYER_BOTTOM_MIN : 0,
+	}
+};
+
+var DIRECTION_CHANGE_TIME = 20;
+var BULLET_FIRE_GAP = 100;
+
+var Bullet = React.createClass({
+  displayName: 'Bullet',
+  
+  render: function() {
+    return (
+		React.createElement(
+			'div', 
+			{
+				className: "bullet",
+				style: {
+					bottom : this.props.bottom + "px",
+					left : this.props.left + "px"
+				}
+			},
+			""
+		)
+    );
+  }
+});
 
 // Tank Game main control routine
 var TankGame = React.createClass({
   displayName: 'TankGame',
 
   SPEED_INCREMENT: 5,
+  BULLET_INCREMENT: 20,
   WINDOW_WIDTH : 540,
   WINDOW_HEIGHT : 540,
   BUNKER_VICINITY : 0,
@@ -280,6 +312,16 @@ var TankGame = React.createClass({
     [ true, true, '43%', '25%', '30px', '20px', 10 ],
   ],
   
+  // bullets positions and orientation
+  bullets :[
+	{
+		left: 210,
+		bottom: 60,
+		direction: Direction.top,
+		source: 'player'
+	}
+  ],
+  
   // enemy characteristics (positions, directions)
   enemyCharacteristics: [
 	{
@@ -290,7 +332,9 @@ var TankGame = React.createClass({
 		bgMiddle: 'ghostwhite',
 		bgLast: 'silver',
 		bgGun: 'cadetblue',
-		lastDirectionChangeTime: 0
+		lastDirectionChangeTime: 0,
+		lastFiredTime: 0,
+		source: 'enemy'
 	},
 	{
 		left: 0,
@@ -300,7 +344,9 @@ var TankGame = React.createClass({
 		bgMiddle: 'ghostwhite',
 		bgLast: 'silver',
 		bgGun: 'cadetblue',
-		lastDirectionChangeTime: 0
+		lastDirectionChangeTime: 0,
+		lastFiredTime: 0,
+		source: 'enemy'
 	}
   ],
   
@@ -308,7 +354,9 @@ var TankGame = React.createClass({
   playerCharacteristics: {
     left : 200,
     bottom : 0,
-	direction: Direction.top
+	direction: Direction.top,
+	lastFiredTime: 0,
+	source: 'player'
   },
 
   getInitialState: function(){
@@ -356,12 +404,32 @@ var TankGame = React.createClass({
 			if (this.checkObjectCollision(playerRect)) {
 				this.updatePlayerCharacteristic(enemy, enemyTank, oldLeft, oldBottom, oldAngle, oldDirection);
 			}
+
+			this.fireBullet(enemy);
 		}
       });
 
-	// 2
+	// 2 TODOs
 	// traverse the bullet journey
-
+	// Vanish when reaches a boundary or hit some object
+	// Also vanish the affected object
+	this.bullets.forEach(
+      (bullet, index, object) => {
+		bullet.left -= (bullet.direction == Direction.left)?this.BULLET_INCREMENT:0;
+		bullet.left += (bullet.direction == Direction.right)?this.BULLET_INCREMENT:0;
+		bullet.bottom += (bullet.direction == Direction.top)?this.BULLET_INCREMENT:0;
+		bullet.bottom -= (bullet.direction == Direction.bottom)?this.BULLET_INCREMENT:0;
+		
+		var bulletMaxPositions = this.getBulletMaxPositionsForDirection(bullet.direction);
+		var deleteBullet = false;
+		if (bullet.left<bulletMaxPositions.PLAYER_LEFT_MIN) deleteBullet = true;
+		if (bullet.bottom<bulletMaxPositions.PLAYER_BOTTOM_MIN) deleteBullet = true;
+		if (bullet.left>bulletMaxPositions.PLAYER_LEFT_MAX) deleteBullet = true;
+		if (bullet.bottom>bulletMaxPositions.PLAYER_BOTTOM_MAX) deleteBullet = true;
+		
+		if (deleteBullet) object.splice(index, 1);
+      });
+	
     requestAnimationFrame(this.tick);
     this.setState({
 		time : t
@@ -388,12 +456,68 @@ var TankGame = React.createClass({
 	}
   },
   
+  getBulletMaxPositionsForDirection: function(direction) {
+	switch(direction) {
+		case Direction.top:
+		case Direction.bottom:
+		case Direction.left:
+		case Direction.right:
+			return BULLET_MAX_POSITIONS.DIRECTION;
+	}
+  },
+  
+  getBulletPositionFromSource: function(direction, left, bottom) {
+	var bulletLeft = left, bulletBottom = bottom;
+	switch(direction) {
+		case Direction.top:
+			bulletLeft += 10;
+			bulletBottom += 60;
+			break;
+		case Direction.bottom:
+			bulletLeft += 10;
+			bulletBottom -= 60;
+			break;
+		case Direction.left:
+			bulletLeft -= 60;
+			bulletBottom += 10;
+			break;
+		case Direction.right:
+			bulletLeft += 60;
+			bulletBottom += 10;
+			break;
+	}
+
+	return {left: bulletLeft, bottom: bulletBottom};
+  },
+  
   getAngleFromDirection: function(direction) {
 	switch(direction) {
 		case Direction.top: return 270;
 		case Direction.bottom: return 90;
 		case Direction.left: return 180;
 		case Direction.right: return 0;
+	}
+  },
+  
+  fireBullet: function(playerCharacteristics) {
+	playerCharacteristics.lastFiredTime += 1;
+	var lastFiredTime = playerCharacteristics.lastFiredTime;
+	var source = playerCharacteristics.source;
+	var direction = playerCharacteristics.direction;
+	var left = playerCharacteristics.left;
+	var bottom = playerCharacteristics.bottom;
+	
+	if (lastFiredTime < BULLET_FIRE_GAP) {
+		var bulletPosition = this.getBulletPositionFromSource(direction, left, bottom);
+	
+		this.bullets.push({
+			left: bulletPosition.left,
+			bottom: bulletPosition.bottom,
+			direction: direction,
+			source: source
+		});
+	} else {
+		playerCharacteristics.lastFiredTime = 0;
 	}
   },
   
@@ -425,6 +549,9 @@ var TankGame = React.createClass({
 		newAngle = 90;
 		this.playerCharacteristics.direction = Direction.bottom;
         break;
+	  case keyCodes.fire:
+		this.fireBullet(this.playerCharacteristics);
+		return;
       default:
         return;
     }
@@ -498,6 +625,19 @@ var TankGame = React.createClass({
     var objects = [];
 	objects.push(React.createElement(Tank, {key: 'Tank', ref : 'player1', left: this.playerCharacteristics.left, bottom: this.playerCharacteristics.bottom, direction: this.playerCharacteristics.direction}));
     objects.push(React.createElement(Bunker, {key: 'bunker', ref : 'bunker'}));
+	
+	this.bullets.forEach(
+      (bullet, index) => {
+			objects.push(React.createElement(Bullet, {
+				key: 'bullet' + index,
+				ref : 'bullet' + index,
+				left: bullet.left,
+				bottom: bullet.bottom,
+				direction: bullet.direction,
+				source: 'player'
+			}));
+		}
+	);
 
 	this.enemyCharacteristics.forEach(
       (enemy, index) => {

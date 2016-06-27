@@ -14,7 +14,7 @@ Following are the sub-parts being developed
 - DONE Enemy tanks
 - DONE Game Loop
 - DONE Enemy Movements and randomization
-- Bullets
+- DONE Bullets
 - Object destructions
 - Game Start/Stop
 - Game winning/losing conditions
@@ -24,3 +24,4 @@ Following are the sub-parts being developed
 - Corner Bug Fixes
 	- Tanks can cross each other
 	- DONE Sometime tanks get stuck at wall corners
+	- Bullet Firing frequency

@@ -34,3 +34,13 @@
     left: 50%;
     bottom: 65%;
 }
+
+.bullet {
+	background: ghostwhite;
+	width: 8px;
+	height: 8px;
+	position: absolute;
+	padding: 0;
+    margin: 0;
+    border: 1px solid;
+}
