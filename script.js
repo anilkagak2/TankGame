@@ -1,7 +1,8 @@
 // Bric Colors
 var BricColor = {
   naturalColor : '#87592c',
-  silverColor : 'ghostwhite'
+  silverColor : 'ghostwhite',
+  transparent : 'transparent'
 };
 
 var keyCodes = {
@@ -38,26 +39,44 @@ var RandomDirection = function() {
 var Brick = React.createClass({
   displayName: 'Brick',
 
+  getInitialState: function(){
+    return {
+        destroyed: false
+    };
+  },
+  
   getDefaultProps: function() {
     return {
       backgroundColor: BricColor.naturalColor,
       width: '20px',
-      height: '10px'
+      height: '10px',
+	  destroyed: false
     };
   },
 
-  checkCollision : function(playerRect, vicinity) {
+  checkCollision : function(playerRect, vicinity, isBullet) {
+	// if the brick has been destroyed, no point in checking collision
+	if (this.state.destroyed) return false;
+
     var domNode = ReactDOM.findDOMNode(this.refs.brick);
     var domRect = domNode.getBoundingClientRect();
-    return CollisionBetweenRectangles(playerRect, domRect, vicinity);
+	var collided = CollisionBetweenRectangles(playerRect, domRect, vicinity);
+	
+	if (isBullet && collided) {
+		this.setState({
+			destroyed : true
+		});
+	}
+	
+    return collided;
   },
 
   render: function() {
     var tankStyle = {
-      backgroundColor: this.props.backgroundColor,
+      backgroundColor: this.state.destroyed ? BricColor.transparent : this.props.backgroundColor,
       width: this.props.width,
       height: this.props.height,
-      border: "3px solid black"
+      border: this.state.destroyed ? "0px" : "3px solid black"
     };
     return (
       React.createElement('div', {
@@ -85,10 +104,10 @@ var Wall = React.createClass({
     };
   },
 
-  checkCollision: function(playerRect, vicinity) {
+  checkCollision: function(playerRect, vicinity, isBullet) {
     for (var i = 0; i < this.props.bricks; ++i) {
       var brickReference = this.refs["brick" + i];
-      if (brickReference.checkCollision(playerRect, vicinity)) {
+      if (brickReference.checkCollision(playerRect, vicinity, isBullet)) {
         return true;
       }
     }
@@ -128,10 +147,10 @@ var Wall = React.createClass({
 var Bunker = React.createClass({
   displayName: 'Bunker',
   
-  checkCollision: function(playerRect, vicinity) {
+  checkCollision: function(playerRect, vicinity, isBullet) {
     for (var i = 1; i <= 3; ++i) {
       var wallReference = this.refs["wall" + i];
-      if (wallReference.checkCollision(playerRect, vicinity)) {
+      if (wallReference.checkCollision(playerRect, vicinity, isBullet)) {
         return true;
       }
     }
@@ -252,7 +271,7 @@ var BULLET_MAX_POSITIONS = {
 };
 
 var DIRECTION_CHANGE_TIME = 20;
-var BULLET_FIRE_GAP = 100;
+var BULLET_FIRE_GAP = 30;
 
 var Bullet = React.createClass({
   displayName: 'Bullet',
@@ -322,6 +341,8 @@ var TankGame = React.createClass({
 	}
   ],
   
+  lastFiredTime: 0,
+  
   // enemy characteristics (positions, directions)
   enemyCharacteristics: [
 	{
@@ -333,7 +354,7 @@ var TankGame = React.createClass({
 		bgLast: 'silver',
 		bgGun: 'cadetblue',
 		lastDirectionChangeTime: 0,
-		lastFiredTime: 0,
+		readyToFire: true,
 		source: 'enemy'
 	},
 	{
@@ -345,7 +366,7 @@ var TankGame = React.createClass({
 		bgLast: 'silver',
 		bgGun: 'cadetblue',
 		lastDirectionChangeTime: 0,
-		lastFiredTime: 0,
+		readyToFire: true,
 		source: 'enemy'
 	}
   ],
@@ -355,7 +376,7 @@ var TankGame = React.createClass({
     left : 200,
     bottom : 0,
 	direction: Direction.top,
-	lastFiredTime: 0,
+	readyToFire: true,
 	source: 'player'
   },
 
@@ -401,7 +422,7 @@ var TankGame = React.createClass({
 			enemyTank.style.left = enemy.left.toString() + "px";
 			enemyTank.style.bottom = enemy.bottom.toString() + "px";
 			var playerRect = enemyTank.getBoundingClientRect();
-			if (this.checkObjectCollision(playerRect)) {
+			if (this.checkObjectCollision(playerRect, false)) {
 				this.updatePlayerCharacteristic(enemy, enemyTank, oldLeft, oldBottom, oldAngle, oldDirection);
 			}
 
@@ -427,6 +448,14 @@ var TankGame = React.createClass({
 		if (bullet.left>bulletMaxPositions.PLAYER_LEFT_MAX) deleteBullet = true;
 		if (bullet.bottom>bulletMaxPositions.PLAYER_BOTTOM_MAX) deleteBullet = true;
 		
+		if (!deleteBullet) {
+			var bulletNode = ReactDOM.findDOMNode(this.refs['bullet' + index]);
+			if (bulletNode) {
+				var bulletRect = bulletNode.getBoundingClientRect();
+				if (this.checkObjectCollision(bulletRect, true)) deleteBullet = true;
+			}
+		}
+
 		if (deleteBullet) object.splice(index, 1);
       });
 	
@@ -499,25 +528,22 @@ var TankGame = React.createClass({
 	}
   },
   
-  fireBullet: function(playerCharacteristics) {
-	playerCharacteristics.lastFiredTime += 1;
-	var lastFiredTime = playerCharacteristics.lastFiredTime;
-	var source = playerCharacteristics.source;
-	var direction = playerCharacteristics.direction;
-	var left = playerCharacteristics.left;
-	var bottom = playerCharacteristics.bottom;
-	
-	if (lastFiredTime < BULLET_FIRE_GAP) {
+  fireBullet: function(playerCharacteristics) {	
+	if (playerCharacteristics.readyToFire) {
+		playerCharacteristics.readyToFire = false;
+
+		var source = playerCharacteristics.source;
+		var direction = playerCharacteristics.direction;
+		var left = playerCharacteristics.left;
+		var bottom = playerCharacteristics.bottom;
 		var bulletPosition = this.getBulletPositionFromSource(direction, left, bottom);
-	
+
 		this.bullets.push({
 			left: bulletPosition.left,
 			bottom: bulletPosition.bottom,
 			direction: direction,
 			source: source
 		});
-	} else {
-		playerCharacteristics.lastFiredTime = 0;
 	}
   },
   
@@ -578,15 +604,15 @@ var TankGame = React.createClass({
 		player.style.bottom = this.playerCharacteristics.bottom.toString() + "px";
 		
 		var playerRect = player.getBoundingClientRect();
-		if (this.checkObjectCollision(playerRect)) {
+		if (this.checkObjectCollision(playerRect, false)) {
 			this.updatePlayerCharacteristic(this.playerCharacteristics, player, oldLeft, oldBottom, oldAngle, oldDirection);
 		}
 	}
   },
 
-  checkObjectCollision: function(objectRect) {
+  checkObjectCollision: function(objectRect, isBullet) {
     // check if it collides with bunker
-    if (this.refs.bunker.checkCollision(objectRect, this.BUNKER_VICINITY)) {
+    if (this.refs.bunker.checkCollision(objectRect, this.BUNKER_VICINITY, isBullet)) {
 		return true;
     }
 
@@ -594,7 +620,7 @@ var TankGame = React.createClass({
     for (var i=0; i<this.walls.length; ++i) {
       var wallString = "wall" + i;
       var wallReference = this.refs[wallString];
-      var collisionOccurred = wallReference.checkCollision(objectRect, this.WALL_VICINITY);
+      var collisionOccurred = wallReference.checkCollision(objectRect, this.WALL_VICINITY, isBullet);
 
       if (collisionOccurred) {
         return true;
@@ -615,7 +641,19 @@ var TankGame = React.createClass({
     window.addEventListener('keydown', this.keyDownHandler, true);
     window.addEventListener('keyup', this.keyUpHandler, true);
   },
-  
+
+  componentDidUpdate : function() {
+	this.lastFiredTime += 1;
+	if (this.lastFiredTime > BULLET_FIRE_GAP) {
+		this.lastFiredTime = 0;
+		this.playerCharacteristics.readyToFire = true;
+		this.enemyCharacteristics.forEach(
+		(enemy, index) => {
+			enemy.readyToFire = true;
+		});
+	}
+  },
+
   componentWillUnmount : function () {
     window.removeEventListener('keydown', keyDownHandler);
     window.removeEventListener('keyup', keyUpHandler);
