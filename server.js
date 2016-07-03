@@ -4,7 +4,7 @@ var requirejs = require('requirejs');
 
 var config = {
     baseUrl: './public/scripts/',
-    name: 'game',
+    name: 'gamedriver',
     out: './public/script.js'
 };
 
