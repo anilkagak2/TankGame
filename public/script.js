@@ -62,7 +62,7 @@ var Brick = React.createClass({
     var domRect = domNode.getBoundingClientRect();
 	var collided = CollisionBetweenRectangles(playerRect, domRect, vicinity);
 	
-	if (isBullet && collided) {
+	if (isBullet && collided && this.props.backgroundColor != BricColor.silverColor) {
 		this.setState({
 			destroyed : true
 		});
@@ -76,7 +76,7 @@ var Brick = React.createClass({
       backgroundColor: this.state.destroyed ? BricColor.transparent : this.props.backgroundColor,
       width: this.props.width,
       height: this.props.height,
-      border: this.state.destroyed ? "0px" : "3px solid black"
+      border: this.state.destroyed ? "3px solid transparent" : "3px solid black"
     };
     return (
       React.createElement('div', {
