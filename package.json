@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "mime": "~1.2.7",
-    "express": "3.x"
+    "express": "3.x",
+	"requirejs": "2.x"
   }
 }
