@@ -15,7 +15,8 @@ Following are the sub-parts being developed
 - DONE Game Loop
 - DONE Enemy Movements and randomization
 - DONE Bullets
-- Object destructions
+- DONE Deploy to heroku
+- InProgress Object destructions
 - Game Start/Stop
 - Game winning/losing conditions
 - Score board
