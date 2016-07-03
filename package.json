@@ -1,0 +1,13 @@
+{
+  "name" : "TankGame-ak2",
+  "version" : "0.0.1",
+  "description" : "2D Tank Game: Video game adapted to the javascript with Rich Graphic elements",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/anilkagak2/TankGame.git"
+  },
+  "dependencies" : {
+    "mime" : "~1.2.7",
+	"express" : "3.x"
+  }
+}
