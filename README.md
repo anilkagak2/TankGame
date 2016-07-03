@@ -1,7 +1,7 @@
 # TankGame
 This is a react based tank game similar to the video game which we used to play during our childhood.
 
-Can be viewed at https://embed.plnkr.co/EhZaoqd7mMhJE5MSZHxQ/
+Can be viewed at https://tankgame-ak2.herokuapp.com/
 
 Following are the sub-parts being developed
 
