@@ -26,3 +26,6 @@ Following are the sub-parts being developed
 	- Tanks can cross each other
 	- DONE Sometime tanks get stuck at wall corners
 	- DONE Bullet Firing frequency
+	- DONE Silver bricks should be destroyed using bullets
+	- DONE Bricks slide a bit when destroyed
+	- Bullets should not pass through nearer bricks
