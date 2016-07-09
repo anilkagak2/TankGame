@@ -3,6 +3,13 @@ define("Wall", ["Constants", "Brick"], function(Constants, Brick) {
 	var Wall = React.createClass({
 	  displayName: 'Wall',
 
+	  reset: function() {
+		for (var i = 0; i < this.props.bricks; ++i) {
+		  var brickRef = this.refs["brick" + i];
+		  brickRef.reset();
+		}
+	  },
+	  
 	  getDefaultProps: function() {
 		return {
 		  backgroundColor: Constants.BricColor.naturalColor,

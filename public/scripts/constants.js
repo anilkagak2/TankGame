@@ -30,7 +30,8 @@ define("Constants", [], function() {
 	var CollisionOutput = {
 		NO_COLLISION : 0,
 		COLLISION : 1,
-		BUNKER_DESTROYED : 2
+		BUNKER_DESTROYED : 2,
+		TANK_DESTROYED : 3
 	};
 	
 	var CollisionBetweenRectangles = function(r1, r2, vicinity) {

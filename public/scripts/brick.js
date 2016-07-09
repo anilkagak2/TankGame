@@ -3,6 +3,12 @@ define("Brick", ["Constants"], function(Constants) {
 	var Brick = React.createClass({
 		displayName: 'Brick',
 
+		reset: function() {
+			this.setState({
+				destroyed: false
+			});
+		},
+		
 		getInitialState: function(){
 			return {
 				destroyed: false

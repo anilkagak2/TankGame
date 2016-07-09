@@ -30,7 +30,8 @@ define("Constants", [], function() {
 	var CollisionOutput = {
 		NO_COLLISION : 0,
 		COLLISION : 1,
-		BUNKER_DESTROYED : 2
+		BUNKER_DESTROYED : 2,
+		TANK_DESTROYED : 3
 	};
 	
 	var CollisionBetweenRectangles = function(r1, r2, vicinity) {
@@ -63,6 +64,12 @@ define("Brick", ["Constants"], function(Constants) {
 	var Brick = React.createClass({
 		displayName: 'Brick',
 
+		reset: function() {
+			this.setState({
+				destroyed: false
+			});
+		},
+		
 		getInitialState: function(){
 			return {
 				destroyed: false
@@ -121,6 +128,13 @@ define("Wall", ["Constants", "Brick"], function(Constants, Brick) {
 	var Wall = React.createClass({
 	  displayName: 'Wall',
 
+	  reset: function() {
+		for (var i = 0; i < this.props.bricks; ++i) {
+		  var brickRef = this.refs["brick" + i];
+		  brickRef.reset();
+		}
+	  },
+	  
 	  getDefaultProps: function() {
 		return {
 		  backgroundColor: Constants.BricColor.naturalColor,
@@ -204,6 +218,21 @@ define("Tank", ["Constants"], function(Constants) {
 		}
 	  },
 	  
+	  checkCollision: function(playerRect, vicinity, isBullet) {		
+		var domNode = ReactDOM.findDOMNode(this.refs["tank"]);
+		var domRect = domNode.getBoundingClientRect();
+		if ( Constants.CollisionBetweenRectangles(playerRect, domRect, vicinity) ) {
+			if (isBullet) {
+				return Constants.CollisionOutput.TANK_DESTROYED;
+			}
+			else {
+				return Constants.CollisionOutput.COLLISION;
+			}
+		}
+
+		return Constants.CollisionOutput.NO_COLLISION;
+	  },
+	  
 	  render: function() {
 		var transformAngle = this.getTransformAngle();
 		
@@ -218,6 +247,7 @@ define("Tank", ["Constants"], function(Constants) {
 				'div', 
 				{
 					className: "new-player",
+					ref: "tank",
 					style: {
 						bottom : this.props.bottom + "px",
 						left : this.props.left + "px",
@@ -266,6 +296,13 @@ define("Bunker", ["Constants", "Wall"], function(Constants, Wall) {
 	var Bunker = React.createClass({
 	  displayName: 'Bunker',
 	  
+	  reset: function() {
+		for (var i = 1; i <= 3; ++i) {
+		  var wallReference = this.refs["wall" + i];
+		  wallReference.reset();
+		}
+	  },
+	  
 	  checkCollision: function(playerRect, vicinity, isBullet) {
 		for (var i = 1; i <= 3; ++i) {
 		  var wallReference = this.refs["wall" + i];
@@ -277,8 +314,12 @@ define("Bunker", ["Constants", "Wall"], function(Constants, Wall) {
 		var domNode = ReactDOM.findDOMNode(this.refs["bunkerTarget"]);
 		var domRect = domNode.getBoundingClientRect();
 		if ( Constants.CollisionBetweenRectangles(playerRect, domRect, vicinity) ) {
-			if (isBullet) return Constants.CollisionOutput.BUNKER_DESTROYED;
-			else Constants.CollisionOutput.COLLISION;
+			if (isBullet) {
+				return Constants.CollisionOutput.BUNKER_DESTROYED;
+			}
+			else {
+				return Constants.CollisionOutput.COLLISION;
+			}
 		}
 		
 		return Constants.CollisionOutput.NO_COLLISION;
@@ -390,13 +431,42 @@ define("TankGame", ["Constants", "Brick", "Wall", "Tank", "Bullet", "Bunker", "B
 	var BULLET_INCREMENT = 15;
 	var BUNKER_VICINITY = 0;
 	var WALL_VICINITY = 0;
+	
+	var DefaultEnemy1 = {
+		left: 506,
+		bottom: 506,
+		direction: Constants.Direction.left,
+		bgFirst: 'silver',
+		bgMiddle: 'ghostwhite',
+		bgLast: 'silver',
+		bgGun: 'cadetblue',
+		lastDirectionChangeTime: 0,
+		readyToFire: true,
+		source: 'enemy1'
+	};
+	
+	var DefaultEnemy2 = {
+		left: 0,
+		bottom: 506,
+		direction: Constants.Direction.right,
+		bgFirst: 'silver',
+		bgMiddle: 'ghostwhite',
+		bgLast: 'silver',
+		bgGun: 'cadetblue',
+		lastDirectionChangeTime: 0,
+		readyToFire: true,
+		source: 'enemy2'
+	};
+	
+	var DefaultPlayer1 = {
+		left : 200,
+		bottom : 0,
+		direction: Constants.Direction.top,
+		readyToFire: true,
+		source: 'player1'
+	};
 
-	// Tank Game main control routine
-	var TankGame = React.createClass({
-	  displayName: 'TankGame',
-
-	  walls: 
-	  [
+	var DefaultWalls = [
 		// left
 		[ true, true, '7%', '80%', '30px', '20px', 5 ],
 		[ true, true, '7%', '65%', '30px', '20px', 5 ],
@@ -420,50 +490,38 @@ define("TankGame", ["Constants", "Brick", "Wall", "Tank", "Bullet", "Bunker", "B
 		[ true, true, '7%', '25%', '30px', '20px', 5 ],
 		[ true, true, '43%', '10%', '30px', '20px', 10 ],
 		[ true, true, '43%', '25%', '30px', '20px', 10 ],
-	  ],
-	  
-	  // bullets positions and orientation
+	];
+	
+	// Tank Game main control routine
+	var TankGame = React.createClass({
+	  displayName: 'TankGame',
+
+	  walls: DefaultWalls,
 	  bullets :[],
-
 	  lastFiredTime: 0,
-	  
-	  // enemy characteristics (positions, directions)
-	  enemyCharacteristics: [
-		{
-			left: 506,
-			bottom: 506,
-			direction: Constants.Direction.left,
-			bgFirst: 'silver',
-			bgMiddle: 'ghostwhite',
-			bgLast: 'silver',
-			bgGun: 'cadetblue',
-			lastDirectionChangeTime: 0,
-			readyToFire: true,
-			source: 'enemy'
-		},
-		{
-			left: 0,
-			bottom: 506,
-			direction: Constants.Direction.right,
-			bgFirst: 'silver',
-			bgMiddle: 'ghostwhite',
-			bgLast: 'silver',
-			bgGun: 'cadetblue',
-			lastDirectionChangeTime: 0,
-			readyToFire: true,
-			source: 'enemy'
-		}
-	  ],
-	  
-	  // player speed and direction
-	  playerCharacteristics: {
-		left : 200,
-		bottom : 0,
-		direction: Constants.Direction.top,
-		readyToFire: true,
-		source: 'player'
-	  },
+	  enemyCharacteristics: [ Object.create( DefaultEnemy1 ), Object.create(  DefaultEnemy2 ) ],
+	  playerCharacteristics: Object.create( DefaultPlayer1 ),
 
+	  resetGame: function() {
+		this.bullets = [];
+		this.lastFiredTime = 0;
+		this.enemyCharacteristics = [ Object.create( DefaultEnemy1 ), Object.create(  DefaultEnemy2 ) ];
+		this.playerCharacteristics = Object.create( DefaultPlayer1 );
+		
+		this.walls.forEach(
+		  (val, index) => {
+			var wallRef = this.refs["wall" + index];
+			wallRef.reset();
+		  });
+
+		var bunkerRef = this.refs.bunker;
+		bunkerRef.reset();
+		this.setState({
+			time : 0,
+			gameState : Constants.GameState.PAUSED
+		});
+	  },
+	  
 	  getInitialState: function(){
 		return {
 			time: this.getNewTimeValue(),
@@ -518,7 +576,7 @@ define("TankGame", ["Constants", "Brick", "Wall", "Tank", "Bullet", "Bunker", "B
 				enemyTank.style.left = enemy.left.toString() + "px";
 				enemyTank.style.bottom = enemy.bottom.toString() + "px";
 				var playerRect = enemyTank.getBoundingClientRect();
-				if (this.checkObjectCollision(playerRect, false)) {
+				if (this.checkObjectCollision('enemy' + index, playerRect, false, "")) {
 					this.updatePlayerCharacteristic(enemy, enemyTank, oldLeft, oldBottom, oldAngle, oldDirection);
 				}
 
@@ -548,7 +606,7 @@ define("TankGame", ["Constants", "Brick", "Wall", "Tank", "Bullet", "Bunker", "B
 				var bulletNode = ReactDOM.findDOMNode(this.refs['bullet' + index]);
 				if (bulletNode) {
 					var bulletRect = bulletNode.getBoundingClientRect();
-					if (this.checkObjectCollision(bulletRect, true)) deleteBullet = true;
+					if (this.checkObjectCollision('bullet' + index, bulletRect, true, bullet.source)) deleteBullet = true;
 				}
 			}
 
@@ -656,7 +714,7 @@ define("TankGame", ["Constants", "Brick", "Wall", "Tank", "Bullet", "Bunker", "B
 
 				break;
 			case Constants.GameState.OVER:
-				// TODO Will reset all the positions
+				this.resetGame();
 				break;
 		}
 	  },
@@ -727,13 +785,13 @@ define("TankGame", ["Constants", "Brick", "Wall", "Tank", "Bullet", "Bunker", "B
 			player.style.bottom = this.playerCharacteristics.bottom.toString() + "px";
 			
 			var playerRect = player.getBoundingClientRect();
-			if (this.checkObjectCollision(playerRect, false)) {
+			if (this.checkObjectCollision("player1", playerRect, false, "")) {
 				this.updatePlayerCharacteristic(this.playerCharacteristics, player, oldLeft, oldBottom, oldAngle, oldDirection);
 			}
 		}
 	  },
 
-	  checkObjectCollision: function(objectRect, isBullet) {
+	  checkObjectCollision: function(objectRefString, objectRect, isBullet, bulletSource) {
 		// check if it collides with bunker
 		var bunkerCollisionOutput = this.refs.bunker.checkCollision(objectRect, BUNKER_VICINITY, isBullet);
 		if (bunkerCollisionOutput == Constants.CollisionOutput.BUNKER_DESTROYED) {
@@ -758,6 +816,38 @@ define("TankGame", ["Constants", "Brick", "Wall", "Tank", "Bullet", "Bunker", "B
 		  }
 		}
 
+		// check if collides with player
+		if (objectRefString !== 'player1' && bulletSource !== 'player1') {
+			var player = this.refs.player1;
+			var collidedWithPlayer = player.checkCollision(objectRect, 0, isBullet);
+			if (collidedWithPlayer !== Constants.CollisionOutput.NO_COLLISION) {
+				if (collidedWithPlayer === Constants.CollisionOutput.TANK_DESTROYED) {
+					this.setState({
+						gameState: Constants.GameState.OVER
+					});
+				}
+				return true;
+			}
+		}
+
+		// check if collides with enemy
+		this.enemyCharacteristics.forEach(
+		  (enemy, index) => {
+			var enemyRefString = 'enemy' + index ;
+			if (objectRefString !== enemyRefString && bulletSource !== enemyRefString) {
+				var enemyTank = this.refs['enemy' + index];
+				var collidedWithEnemy = enemyTank.checkCollision(objectRect, 0, isBullet);
+				if (collidedWithEnemy !== Constants.CollisionOutput.NO_COLLISION) {
+					if (collidedWithEnemy === Constants.CollisionOutput.TANK_DESTROYED) {
+						// this.setState({
+						//	gameState: Constants.GameState.OVER
+						//}); 
+					}
+					return true;
+				}
+			}
+		  });
+		
 		return false;
 	  },
 	  
@@ -808,7 +898,7 @@ define("TankGame", ["Constants", "Brick", "Wall", "Tank", "Bullet", "Bunker", "B
 					left: bullet.left,
 					bottom: bullet.bottom,
 					direction: bullet.direction,
-					source: 'player'
+					source: bullet.source
 				}));
 			}
 		);

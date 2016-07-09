@@ -15,6 +15,8 @@ requirejs.optimize(config, function (buildResponse) {
 	console.log("optimizing");
     var contents = fs.readFileSync(config.out, 'utf8');
 }, function(err) {
+	console.log("failed");
+	console.log(err);
     //optimization err callback
 });
 

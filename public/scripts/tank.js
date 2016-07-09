@@ -25,6 +25,21 @@ define("Tank", ["Constants"], function(Constants) {
 		}
 	  },
 	  
+	  checkCollision: function(playerRect, vicinity, isBullet) {		
+		var domNode = ReactDOM.findDOMNode(this.refs["tank"]);
+		var domRect = domNode.getBoundingClientRect();
+		if ( Constants.CollisionBetweenRectangles(playerRect, domRect, vicinity) ) {
+			if (isBullet) {
+				return Constants.CollisionOutput.TANK_DESTROYED;
+			}
+			else {
+				return Constants.CollisionOutput.COLLISION;
+			}
+		}
+
+		return Constants.CollisionOutput.NO_COLLISION;
+	  },
+	  
 	  render: function() {
 		var transformAngle = this.getTransformAngle();
 		
@@ -39,6 +54,7 @@ define("Tank", ["Constants"], function(Constants) {
 				'div', 
 				{
 					className: "new-player",
+					ref: "tank",
 					style: {
 						bottom : this.props.bottom + "px",
 						left : this.props.left + "px",

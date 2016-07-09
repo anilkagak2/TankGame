@@ -4,6 +4,13 @@ define("Bunker", ["Constants", "Wall"], function(Constants, Wall) {
 	var Bunker = React.createClass({
 	  displayName: 'Bunker',
 	  
+	  reset: function() {
+		for (var i = 1; i <= 3; ++i) {
+		  var wallReference = this.refs["wall" + i];
+		  wallReference.reset();
+		}
+	  },
+	  
 	  checkCollision: function(playerRect, vicinity, isBullet) {
 		for (var i = 1; i <= 3; ++i) {
 		  var wallReference = this.refs["wall" + i];
@@ -15,8 +22,12 @@ define("Bunker", ["Constants", "Wall"], function(Constants, Wall) {
 		var domNode = ReactDOM.findDOMNode(this.refs["bunkerTarget"]);
 		var domRect = domNode.getBoundingClientRect();
 		if ( Constants.CollisionBetweenRectangles(playerRect, domRect, vicinity) ) {
-			if (isBullet) return Constants.CollisionOutput.BUNKER_DESTROYED;
-			else Constants.CollisionOutput.COLLISION;
+			if (isBullet) {
+				return Constants.CollisionOutput.BUNKER_DESTROYED;
+			}
+			else {
+				return Constants.CollisionOutput.COLLISION;
+			}
 		}
 		
 		return Constants.CollisionOutput.NO_COLLISION;
