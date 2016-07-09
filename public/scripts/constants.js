@@ -6,6 +6,7 @@ define("Constants", [], function() {
 	};
 
 	var keyCodes = {
+		spaceBar: 32,
 		leftArrow: 37,
 		upArrow: 38,
 		rightArrow: 39,
@@ -18,6 +19,12 @@ define("Constants", [], function() {
 		right : 2,
 		top : 3,
 		bottom : 4
+	};
+
+	var GameState = {
+		PAUSED : 1,
+		INPROGRESS : 2,
+		OVER : 3
 	};
 
 	var CollisionBetweenRectangles = function(r1, r2, vicinity) {
@@ -39,6 +46,7 @@ define("Constants", [], function() {
 		BricColor : BricColor,
 		keyCodes : keyCodes,
 		Direction : Direction,
+		GameState : GameState,
 		CollisionBetweenRectangles : CollisionBetweenRectangles,
 		RandomDirection : RandomDirection
 	}

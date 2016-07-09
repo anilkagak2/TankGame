@@ -17,7 +17,7 @@ Following are the sub-parts being developed
 - DONE Bullets
 - DONE Deploy to heroku
 - InProgress Object destructions
-- Game Start/Stop
+- InProgress Game Start/Stop
 - Game winning/losing conditions
 - Score board
 - Customization
@@ -28,4 +28,14 @@ Following are the sub-parts being developed
 	- DONE Bullet Firing frequency
 	- DONE Silver bricks should be destroyed using bullets
 	- DONE Bricks slide a bit when destroyed
-	- Bullets should not pass through nearer bricks
+	- DONE Bullets should not pass through nearer bricks
+
+TODOS 09/07/2016
+- DONE Freeze the application before start (space button)
+- DONE Freeze the application after end (space button)
+- Frozen banner and display the current state of the app
+- Target destruction
+- Player destruction
+- Game loosing condition and banner
+- Game winning condition and banner
+- Game reset after over

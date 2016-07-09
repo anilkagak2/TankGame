@@ -108,7 +108,8 @@ define("TankGame", ["Constants", "Brick", "Wall", "Tank", "Bullet", "Bunker"], f
 
 	  getInitialState: function(){
 		return {
-			time: this.getNewTimeValue()
+			time: this.getNewTimeValue(),
+			gameState: Constants.GameState.PAUSED
 		};
 	  },
 	  
@@ -117,6 +118,9 @@ define("TankGame", ["Constants", "Brick", "Wall", "Tank", "Bullet", "Bunker"], f
 	  },
 	  
 	  tick : function() {
+		// stop any action if Game is in Paused state
+		if (this.state.gameState === Constants.GameState.PAUSED) return;
+
 		var t = this.getNewTimeValue();
 
 		// 1
@@ -184,8 +188,7 @@ define("TankGame", ["Constants", "Brick", "Wall", "Tank", "Bullet", "Bunker"], f
 
 			if (deleteBullet) object.splice(index, 1);
 		  });
-		
-		requestAnimationFrame(this.tick);
+
 		this.setState({
 			time : t
 		}); 
@@ -273,7 +276,35 @@ define("TankGame", ["Constants", "Brick", "Wall", "Tank", "Bullet", "Bunker"], f
 		}
 	  },
 	  
+	  handleSpaceBarPress: function() {
+		switch(this.state.gameState) {
+			case Constants.GameState.PAUSED:
+				this.setState({
+					gameState: Constants.GameState.INPROGRESS
+				});
+				break;
+			case Constants.GameState.INPROGRESS:
+				this.setState({
+					gameState: Constants.GameState.PAUSED
+				});
+
+				break;
+			case Constants.GameState.OVER:
+				// TODO Will reset all the positions
+				break;
+		}
+	  },
+
 	  keyDownHandler : function(event) {
+		// handle space bar events
+		if (event.keyCode === Constants.keyCodes.spaceBar) {
+			this.handleSpaceBarPress();
+			return;
+		}
+
+		// stop any action if Game is in Paused state
+		if (this.gameState === Constants.GameState.PAUSED) return;
+
 		var oldLeft = this.playerCharacteristics.left;
 		var oldBottom = this.playerCharacteristics.bottom;
 		var oldDirection = this.playerCharacteristics.direction;
@@ -363,6 +394,10 @@ define("TankGame", ["Constants", "Brick", "Wall", "Tank", "Bullet", "Bunker"], f
 		requestAnimationFrame( this.tick );
 	  },
 	  
+	  componentWillUpdate: function(){
+		requestAnimationFrame( this.tick );
+	  },
+
 	  componentDidMount : function() {
 		window.addEventListener('keydown', this.keyDownHandler, true);
 		window.addEventListener('keyup', this.keyUpHandler, true);
