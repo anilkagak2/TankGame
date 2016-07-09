@@ -27,6 +27,12 @@ define("Constants", [], function() {
 		OVER : 3
 	};
 
+	var CollisionOutput = {
+		NO_COLLISION : 0,
+		COLLISION : 1,
+		BUNKER_DESTROYED : 2
+	};
+	
 	var CollisionBetweenRectangles = function(r1, r2, vicinity) {
 		return  !(r2.left >= r1.right + vicinity
 			|| r2.right <= r1.left - vicinity
@@ -47,6 +53,7 @@ define("Constants", [], function() {
 		keyCodes : keyCodes,
 		Direction : Direction,
 		GameState : GameState,
+		CollisionOutput: CollisionOutput,
 		CollisionBetweenRectangles : CollisionBetweenRectangles,
 		RandomDirection : RandomDirection
 	}
@@ -253,7 +260,7 @@ define("Bullet", [], function(){
 		Bullet : Bullet
 	}
 });
-define("Bunker", ["Wall"], function(Wall) {
+define("Bunker", ["Constants", "Wall"], function(Constants, Wall) {
 
 	// Bunker Object which needs to be protected
 	var Bunker = React.createClass({
@@ -263,11 +270,18 @@ define("Bunker", ["Wall"], function(Wall) {
 		for (var i = 1; i <= 3; ++i) {
 		  var wallReference = this.refs["wall" + i];
 		  if (wallReference.checkCollision(playerRect, vicinity, isBullet)) {
-			return true;
+			return Constants.CollisionOutput.COLLISION;
 		  }
 		}
 		
-		return false;
+		var domNode = ReactDOM.findDOMNode(this.refs["bunkerTarget"]);
+		var domRect = domNode.getBoundingClientRect();
+		if ( Constants.CollisionBetweenRectangles(playerRect, domRect, vicinity) ) {
+			if (isBullet) return Constants.CollisionOutput.BUNKER_DESTROYED;
+			else Constants.CollisionOutput.COLLISION;
+		}
+		
+		return Constants.CollisionOutput.NO_COLLISION;
 	  },
 	  
 	  render: function() {
@@ -282,6 +296,7 @@ define("Bunker", ["Wall"], function(Wall) {
 
 		var baseObjectProps = {
 		  key: "toBeSecured",
+		  ref: "bunkerTarget",
 		  src: "https://avatars.githubusercontent.com/u/1572699?v=3",
 		  alt: "Mike Wizowski",
 		  style: {
@@ -470,7 +485,7 @@ define("TankGame", ["Constants", "Brick", "Wall", "Tank", "Bullet", "Bunker", "B
 
 	  tick : function() {
 		// stop any action if Game is in Paused state
-		if (this.state.gameState === Constants.GameState.PAUSED) return;
+		if (this.state.gameState !== Constants.GameState.INPROGRESS) return;
 
 		var t = this.getNewTimeValue();
 
@@ -654,7 +669,7 @@ define("TankGame", ["Constants", "Brick", "Wall", "Tank", "Bullet", "Bunker", "B
 		}
 
 		// stop any action if Game is in Paused state
-		if (this.gameState === Constants.GameState.PAUSED) return;
+		if (this.state.gameState !== Constants.GameState.INPROGRESS) return;
 
 		var oldLeft = this.playerCharacteristics.left;
 		var oldBottom = this.playerCharacteristics.bottom;
@@ -720,7 +735,15 @@ define("TankGame", ["Constants", "Brick", "Wall", "Tank", "Bullet", "Bunker", "B
 
 	  checkObjectCollision: function(objectRect, isBullet) {
 		// check if it collides with bunker
-		if (this.refs.bunker.checkCollision(objectRect, BUNKER_VICINITY, isBullet)) {
+		var bunkerCollisionOutput = this.refs.bunker.checkCollision(objectRect, BUNKER_VICINITY, isBullet);
+		if (bunkerCollisionOutput == Constants.CollisionOutput.BUNKER_DESTROYED) {
+			this.setState({
+				gameState: Constants.GameState.OVER
+			});
+			return true;
+		}
+		
+		if (bunkerCollisionOutput == Constants.CollisionOutput.COLLISION) {
 			return true;
 		}
 

@@ -1,4 +1,4 @@
-define("Bunker", ["Wall"], function(Wall) {
+define("Bunker", ["Constants", "Wall"], function(Constants, Wall) {
 
 	// Bunker Object which needs to be protected
 	var Bunker = React.createClass({
@@ -8,11 +8,18 @@ define("Bunker", ["Wall"], function(Wall) {
 		for (var i = 1; i <= 3; ++i) {
 		  var wallReference = this.refs["wall" + i];
 		  if (wallReference.checkCollision(playerRect, vicinity, isBullet)) {
-			return true;
+			return Constants.CollisionOutput.COLLISION;
 		  }
 		}
 		
-		return false;
+		var domNode = ReactDOM.findDOMNode(this.refs["bunkerTarget"]);
+		var domRect = domNode.getBoundingClientRect();
+		if ( Constants.CollisionBetweenRectangles(playerRect, domRect, vicinity) ) {
+			if (isBullet) return Constants.CollisionOutput.BUNKER_DESTROYED;
+			else Constants.CollisionOutput.COLLISION;
+		}
+		
+		return Constants.CollisionOutput.NO_COLLISION;
 	  },
 	  
 	  render: function() {
@@ -27,6 +34,7 @@ define("Bunker", ["Wall"], function(Wall) {
 
 		var baseObjectProps = {
 		  key: "toBeSecured",
+		  ref: "bunkerTarget",
 		  src: "https://avatars.githubusercontent.com/u/1572699?v=3",
 		  alt: "Mike Wizowski",
 		  style: {

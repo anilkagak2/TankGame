@@ -27,6 +27,12 @@ define("Constants", [], function() {
 		OVER : 3
 	};
 
+	var CollisionOutput = {
+		NO_COLLISION : 0,
+		COLLISION : 1,
+		BUNKER_DESTROYED : 2
+	};
+	
 	var CollisionBetweenRectangles = function(r1, r2, vicinity) {
 		return  !(r2.left >= r1.right + vicinity
 			|| r2.right <= r1.left - vicinity
@@ -47,6 +53,7 @@ define("Constants", [], function() {
 		keyCodes : keyCodes,
 		Direction : Direction,
 		GameState : GameState,
+		CollisionOutput: CollisionOutput,
 		CollisionBetweenRectangles : CollisionBetweenRectangles,
 		RandomDirection : RandomDirection
 	}

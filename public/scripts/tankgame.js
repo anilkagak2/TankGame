@@ -127,7 +127,7 @@ define("TankGame", ["Constants", "Brick", "Wall", "Tank", "Bullet", "Bunker", "B
 
 	  tick : function() {
 		// stop any action if Game is in Paused state
-		if (this.state.gameState === Constants.GameState.PAUSED) return;
+		if (this.state.gameState !== Constants.GameState.INPROGRESS) return;
 
 		var t = this.getNewTimeValue();
 
@@ -311,7 +311,7 @@ define("TankGame", ["Constants", "Brick", "Wall", "Tank", "Bullet", "Bunker", "B
 		}
 
 		// stop any action if Game is in Paused state
-		if (this.gameState === Constants.GameState.PAUSED) return;
+		if (this.state.gameState !== Constants.GameState.INPROGRESS) return;
 
 		var oldLeft = this.playerCharacteristics.left;
 		var oldBottom = this.playerCharacteristics.bottom;
@@ -377,7 +377,15 @@ define("TankGame", ["Constants", "Brick", "Wall", "Tank", "Bullet", "Bunker", "B
 
 	  checkObjectCollision: function(objectRect, isBullet) {
 		// check if it collides with bunker
-		if (this.refs.bunker.checkCollision(objectRect, BUNKER_VICINITY, isBullet)) {
+		var bunkerCollisionOutput = this.refs.bunker.checkCollision(objectRect, BUNKER_VICINITY, isBullet);
+		if (bunkerCollisionOutput == Constants.CollisionOutput.BUNKER_DESTROYED) {
+			this.setState({
+				gameState: Constants.GameState.OVER
+			});
+			return true;
+		}
+		
+		if (bunkerCollisionOutput == Constants.CollisionOutput.COLLISION) {
 			return true;
 		}
 

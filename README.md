@@ -34,7 +34,7 @@ TODOS 09/07/2016
 - DONE Freeze the application before start (space button)
 - DONE Freeze the application after end (space button)
 - DONE Frozen banner and display the current state of the app
-- Target destruction
+- DONE Target destruction
 - Player destruction
 - Game loosing condition and banner
 - Game winning condition and banner
