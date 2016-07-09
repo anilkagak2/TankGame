@@ -1,4 +1,4 @@
-define("TankGame", ["Constants", "Brick", "Wall", "Tank", "Bullet", "Bunker"], function(Constants, Brick, Wall, Tank, Bullet, Bunker) {
+define("TankGame", ["Constants", "Brick", "Wall", "Tank", "Bullet", "Bunker", "Banner"], function(Constants, Brick, Wall, Tank, Bullet, Bunker, Banner) {
 	var PLAYER_MAX_POSITIONS = {
 		DIRECTION_LEFT : {
 			PLAYER_LEFT_MAX : 506,
@@ -66,7 +66,7 @@ define("TankGame", ["Constants", "Brick", "Wall", "Tank", "Bullet", "Bunker"], f
 	  
 	  // bullets positions and orientation
 	  bullets :[],
-	  
+
 	  lastFiredTime: 0,
 	  
 	  // enemy characteristics (positions, directions)
@@ -117,6 +117,14 @@ define("TankGame", ["Constants", "Brick", "Wall", "Tank", "Bullet", "Bunker"], f
 		return Math.floor((Date.now() / 5000));
 	  },
 	  
+	  getBannerText: function() {
+		switch(this.state.gameState) {
+			case Constants.GameState.PAUSED: return "PAUSED";
+			case Constants.GameState.INPROGRESS: return "INPROGRESS";
+			case Constants.GameState.OVER: return "OVER";
+		}
+	  },
+
 	  tick : function() {
 		// stop any action if Game is in Paused state
 		if (this.state.gameState === Constants.GameState.PAUSED) return;
@@ -422,6 +430,7 @@ define("TankGame", ["Constants", "Brick", "Wall", "Tank", "Bullet", "Bunker"], f
 	  
 	  render: function() {  
 		var objects = [];
+		objects.push(React.createElement(Banner.Banner, {key: 'Banner', text: this.getBannerText(), visible: this.state.gameState !== Constants.GameState.INPROGRESS}));
 		objects.push(React.createElement(Tank.Tank, {key: 'Tank', ref : 'player1', left: this.playerCharacteristics.left, bottom: this.playerCharacteristics.bottom, direction: this.playerCharacteristics.direction}));
 		objects.push(React.createElement(Bunker.Bunker, {key: 'bunker', ref : 'bunker'}));
 		

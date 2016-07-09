@@ -310,7 +310,38 @@ define("Bunker", ["Wall"], function(Wall) {
 		Bunker : Bunker
 	}
 });
-define("TankGame", ["Constants", "Brick", "Wall", "Tank", "Bullet", "Bunker"], function(Constants, Brick, Wall, Tank, Bullet, Bunker) {
+define("Banner", [], function() {
+	// Base Unit of wall
+	var Banner = React.createClass({
+		displayName: 'Banner',
+
+		getDefaultProps: function() {
+			return {
+				visible: true,
+				text: ""
+			};
+		},
+
+		render: function() {
+			var bannerStyle = {
+				display: this.props.visible? 'block' : 'none',
+			};
+
+			var bannerBackground = React.createElement('div', {key:'bannerBackground', className: 'banner'}, "");
+			var bannerBox = React.createElement('div', {key:'bannerBox', className: 'bannerBox'}, this.props.text);
+			return (
+				React.createElement('div', {
+					style: bannerStyle,
+				}, [bannerBackground, bannerBox])
+			);
+		}
+	});
+
+	return {
+		Banner : Banner
+	}
+});
+define("TankGame", ["Constants", "Brick", "Wall", "Tank", "Bullet", "Bunker", "Banner"], function(Constants, Brick, Wall, Tank, Bullet, Bunker, Banner) {
 	var PLAYER_MAX_POSITIONS = {
 		DIRECTION_LEFT : {
 			PLAYER_LEFT_MAX : 506,
@@ -378,7 +409,7 @@ define("TankGame", ["Constants", "Brick", "Wall", "Tank", "Bullet", "Bunker"], f
 	  
 	  // bullets positions and orientation
 	  bullets :[],
-	  
+
 	  lastFiredTime: 0,
 	  
 	  // enemy characteristics (positions, directions)
@@ -429,6 +460,14 @@ define("TankGame", ["Constants", "Brick", "Wall", "Tank", "Bullet", "Bunker"], f
 		return Math.floor((Date.now() / 5000));
 	  },
 	  
+	  getBannerText: function() {
+		switch(this.state.gameState) {
+			case Constants.GameState.PAUSED: return "PAUSED";
+			case Constants.GameState.INPROGRESS: return "INPROGRESS";
+			case Constants.GameState.OVER: return "OVER";
+		}
+	  },
+
 	  tick : function() {
 		// stop any action if Game is in Paused state
 		if (this.state.gameState === Constants.GameState.PAUSED) return;
@@ -734,6 +773,7 @@ define("TankGame", ["Constants", "Brick", "Wall", "Tank", "Bullet", "Bunker"], f
 	  
 	  render: function() {  
 		var objects = [];
+		objects.push(React.createElement(Banner.Banner, {key: 'Banner', text: this.getBannerText(), visible: this.state.gameState !== Constants.GameState.INPROGRESS}));
 		objects.push(React.createElement(Tank.Tank, {key: 'Tank', ref : 'player1', left: this.playerCharacteristics.left, bottom: this.playerCharacteristics.bottom, direction: this.playerCharacteristics.direction}));
 		objects.push(React.createElement(Bunker.Bunker, {key: 'bunker', ref : 'bunker'}));
 		
