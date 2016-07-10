@@ -119,14 +119,14 @@ define("TankGame", ["Constants", "Brick", "Wall", "Tank", "Bullet", "Bunker", "B
 		bunkerRef.reset();
 		this.setState({
 			time : 0,
-			gameState : Constants.GameState.PAUSED
+			gameState : Constants.GameState.NOT_STARTED
 		});
 	  },
 	  
 	  getInitialState: function(){
 		return {
 			time: this.getNewTimeValue(),
-			gameState: Constants.GameState.PAUSED
+			gameState: Constants.GameState.NOT_STARTED
 		};
 	  },
 	  
@@ -136,9 +136,11 @@ define("TankGame", ["Constants", "Brick", "Wall", "Tank", "Bullet", "Bunker", "B
 	  
 	  getBannerText: function() {
 		switch(this.state.gameState) {
-			case Constants.GameState.PAUSED: return "PAUSED";
-			case Constants.GameState.INPROGRESS: return "INPROGRESS";
-			case Constants.GameState.OVER: return "GAME OVER";
+			case Constants.GameState.NOT_STARTED: return "Press Space to start";
+			case Constants.GameState.PAUSED: return "Game Paused";
+			case Constants.GameState.INPROGRESS: return "Game in progress";
+			case Constants.GameState.OVER: return "Game Over";
+			case Constants.GameState.WON: return "You Won";
 		}
 	  },
 
@@ -303,6 +305,7 @@ define("TankGame", ["Constants", "Brick", "Wall", "Tank", "Bullet", "Bunker", "B
 	  
 	  handleSpaceBarPress: function() {
 		switch(this.state.gameState) {
+			case Constants.GameState.NOT_STARTED:
 			case Constants.GameState.PAUSED:
 				this.setState({
 					gameState: Constants.GameState.INPROGRESS
@@ -315,6 +318,7 @@ define("TankGame", ["Constants", "Brick", "Wall", "Tank", "Bullet", "Bunker", "B
 
 				break;
 			case Constants.GameState.OVER:
+			case Constants.GameState.WON:
 				this.resetGame();
 				break;
 		}

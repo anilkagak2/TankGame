@@ -22,9 +22,11 @@ define("Constants", [], function() {
 	};
 
 	var GameState = {
+		NOT_STARTED : 0,
 		PAUSED : 1,
 		INPROGRESS : 2,
-		OVER : 3
+		OVER : 3,
+		WON : 4
 	};
 
 	var CollisionOutput = {
