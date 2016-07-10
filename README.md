@@ -18,7 +18,7 @@ Following are the sub-parts being developed
 - DONE Deploy to heroku
 - DONE Object destructions
 - DONE Game Start/Stop
-- Game winning/losing conditions
+- DONE Game winning/losing conditions
 - Score board
 - Customization
 - Player mode
@@ -37,5 +37,5 @@ TODOs 09/07/2016
 - DONE Target destruction
 - DONE Player destruction
 - DONE Game loosing condition and banner
-- Game winning condition and banner
+- DONE Game winning condition and banner
 - DONE Game reset after over

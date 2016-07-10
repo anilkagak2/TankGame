@@ -451,6 +451,12 @@ define("TankGame", ["Constants", "Brick", "Wall", "Tank", "Bullet", "Bunker", "B
 				if (collisionOutput !== Constants.CollisionOutput.NO_COLLISION) {
 					if (collisionOutput === Constants.CollisionOutput.TANK_DESTROYED) {
 						object.splice(index, 1);
+
+						if (object.length == 0) {
+							this.setState({ 
+								gameState: Constants.GameState.WON
+							});
+						}
 					}
 					return true;
 				}
