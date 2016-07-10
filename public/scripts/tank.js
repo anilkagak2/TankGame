@@ -3,7 +3,7 @@ define("Tank", ["Constants"], function(Constants) {
 	// Tank object can be used as a player and as enemies
 	var Tank = React.createClass({
 	  displayName: 'Tank',
-	  
+
 	  getDefaultProps: function() {
 		return {
 		  bottom: '0',
@@ -48,7 +48,7 @@ define("Tank", ["Constants"], function(Constants) {
 		children.push(React.createElement('div', {key:'middle', className: "middleStripe", style: {background: this.props.bgMiddle} },""));
 		children.push(React.createElement('div', {key:'last', className: "lastStripe", style: {background: this.props.bgLast} },""));
 		children.push(React.createElement('div', {key:'gun', className: "gun", style: {background: this.props.bgGun}}, ""));
-		
+
 		return (
 			React.createElement(
 				'div', 

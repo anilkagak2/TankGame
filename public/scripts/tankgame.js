@@ -138,7 +138,7 @@ define("TankGame", ["Constants", "Brick", "Wall", "Tank", "Bullet", "Bunker", "B
 		switch(this.state.gameState) {
 			case Constants.GameState.PAUSED: return "PAUSED";
 			case Constants.GameState.INPROGRESS: return "INPROGRESS";
-			case Constants.GameState.OVER: return "OVER";
+			case Constants.GameState.OVER: return "GAME OVER";
 		}
 	  },
 
@@ -392,6 +392,10 @@ define("TankGame", ["Constants", "Brick", "Wall", "Tank", "Bullet", "Bunker", "B
 		}
 	  },
 
+	  willObjectBeDestroyed: function(objectType, isBullet, bulletSource) {
+		return isBullet && (bulletSource.indexOf(objectType) === -1);
+	  },
+	  
 	  checkObjectCollision: function(objectRefString, objectRect, isBullet, bulletSource) {
 		// check if it collides with bunker
 		var bunkerCollisionOutput = this.refs.bunker.checkCollision(objectRect, BUNKER_VICINITY, isBullet);
@@ -418,7 +422,8 @@ define("TankGame", ["Constants", "Brick", "Wall", "Tank", "Bullet", "Bunker", "B
 		}
 
 		// check if collides with player
-		if (objectRefString !== 'player1' && bulletSource !== 'player1') {
+		var willPlayerBeDestroyed = this.willObjectBeDestroyed('player', isBullet, bulletSource);
+		if (objectRefString !== 'player1' && willPlayerBeDestroyed) {
 			var player = this.refs.player1;
 			var collidedWithPlayer = player.checkCollision(objectRect, 0, isBullet);
 			if (collidedWithPlayer !== Constants.CollisionOutput.NO_COLLISION) {
@@ -433,16 +438,15 @@ define("TankGame", ["Constants", "Brick", "Wall", "Tank", "Bullet", "Bunker", "B
 
 		// check if collides with enemy
 		this.enemyCharacteristics.forEach(
-		  (enemy, index) => {
-			var enemyRefString = 'enemy' + index ;
-			if (objectRefString !== enemyRefString && bulletSource !== enemyRefString) {
+		  (enemy, index, object) => {
+			var enemyRefString = 'enemy' + index;
+			var willEnemyBeDestroyed = this.willObjectBeDestroyed('enemy', isBullet, bulletSource);
+			if (objectRefString !== enemyRefString && willEnemyBeDestroyed) {
 				var enemyTank = this.refs['enemy' + index];
-				var collidedWithEnemy = enemyTank.checkCollision(objectRect, 0, isBullet);
-				if (collidedWithEnemy !== Constants.CollisionOutput.NO_COLLISION) {
-					if (collidedWithEnemy === Constants.CollisionOutput.TANK_DESTROYED) {
-						// this.setState({
-						//	gameState: Constants.GameState.OVER
-						//}); 
+				var collisionOutput = enemyTank.checkCollision(objectRect, 0, isBullet);
+				if (collisionOutput !== Constants.CollisionOutput.NO_COLLISION) {
+					if (collisionOutput === Constants.CollisionOutput.TANK_DESTROYED) {
+						object.splice(index, 1);
 					}
 					return true;
 				}

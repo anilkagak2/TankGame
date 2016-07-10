@@ -16,7 +16,7 @@ Following are the sub-parts being developed
 - DONE Enemy Movements and randomization
 - DONE Bullets
 - DONE Deploy to heroku
-- InProgress Object destructions
+- DONE Object destructions
 - DONE Game Start/Stop
 - Game winning/losing conditions
 - Score board
@@ -35,7 +35,7 @@ TODOs 09/07/2016
 - DONE Freeze the application after end (space button)
 - DONE Frozen banner and display the current state of the app
 - DONE Target destruction
-- InProgress Player destruction
+- DONE Player destruction
 - DONE Game loosing condition and banner
 - Game winning condition and banner
 - DONE Game reset after over
